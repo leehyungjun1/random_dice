@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:fluuter_random_dice/screen/home_screen.dart';
+import 'package:fluuter_random_dice/screen/settings_screen.dart';
+import 'dart:math';
+import 'package:shake/shake.dart';
 
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
@@ -9,7 +13,9 @@ class RootScreen extends StatefulWidget {
 
 class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
   TabController? controller;
-
+  double threshold = 2.7;
+  int number = 1;
+  ShakeDetector? shakeDetector;
   @override
   void initState() {
     super.initState();
@@ -17,6 +23,20 @@ class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     controller = TabController(length: 2, vsync: this);
 
     controller!.addListener(tabListener);
+
+    shakeDetector = ShakeDetector.autoStart(
+      onPhoneShake: onPhoneShake,
+      shakeSlopTimeMS: 100,
+      shakeThresholdGravity: threshold,
+    );
+  }
+
+  void onPhoneShake() {
+    final rand = Random();
+
+    setState(() {
+      number = rand.nextInt(5) + 1;
+    });
   }
 
   tabListener() {
@@ -26,6 +46,7 @@ class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
   @override
   dispose() {
     controller!.removeListener(tabListener);
+    shakeDetector!.stopListening();
     super.dispose();
   }
 
@@ -42,23 +63,18 @@ class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
 
   List<Widget> renderChildren() {
     return [
-      Container(
-        child: const Center(
-          child: Text(
-            'Tab 1',
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
+      HomeScreen(number: number),
+      SettingsScreen(
+        threshold: threshold,
+        onThresholdChange: onThresholdChange,
       ),
-      Container(
-        child: const Center(
-          child: Text(
-            'Tab 2',
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
-      )
     ];
+  }
+
+  void onThresholdChange(double val) {
+    setState(() {
+      threshold = val;
+    });
   }
 
   BottomNavigationBar renderBottomNavigation() {
